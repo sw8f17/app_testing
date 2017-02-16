@@ -39,6 +39,21 @@ def _compute_shift(x, y):
     shift = zero_index - np.argmax(np.abs(c))
     return shift
 
+def run_test(time):
+    duration = time # seconds
+    fs = 48000
+    sd.default.samplerate = fs
+    audio = sd.rec(duration * fs, channels=2, dtype="float64")
+    sd.wait()
+
+    combs = {}
+    for pair in combinations(range(audio.shape[1]), 2):
+        if not pair[0] in combs:
+            combs[pair[0]] = {}
+        shift = _compute_shift(audio[:, pair[1]], audio[:, pair[0]])
+        combs[pair[0]][pair[1]] = shift / (fs / 1000)
+    return combs
+
 @begin.subcommand
 def offline():
     print("Offline analysis")
@@ -99,4 +114,4 @@ def file(in_file: 'Wavfile(s) to test. Glob syntax can be used'):
 
 @begin.start(auto_convert=True)
 def main():
-    pass
+    print("A")
