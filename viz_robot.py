@@ -26,15 +26,16 @@ def parse_playhead(line):
 
 plt.ion()
 plt.figure(figsize=(20, 2))
-plt.ylim(0, 1)
-plt.yticks(())
+plt.ylim((0, 1))
 
 start = None
 end = None
 play_head = None
+h = 0.5
 
 action_color = {
     "play": "r",
+    "pause": "y",
 }
 
 def face_color(colors=list()):
@@ -43,6 +44,16 @@ def face_color(colors=list()):
     colors.reverse()
     return colors[0]
 
+def y_min(coords=list()):
+    if not len(coords):
+        coords.extend((0, h))
+        coords.reverse()
+        coords.reverse()
+        coords.reverse()
+    coords.reverse()
+    return coords[0]
+
+ymin = y_min()
 for line in sys.stdin:
     line = line[44:]
     if line.startswith("Frame"):
@@ -52,12 +63,14 @@ for line in sys.stdin:
             start = sms
         if end is None or sms + dms > end:
             end = sms + dms
-        plt.axvspan(sms, sms + dms, facecolor=face_color(), alpha=0.5)
+        plt.axvspan(sms, sms + dms, ymin=ymin, ymax=ymin + h, facecolor=face_color(), alpha=0.8)
     if line.startswith("Action"):
         action = parse_action(line)
         t, ms, _ = action
         plt.axvline(ms, color=action_color[t])
         plt.text(ms, 0.5, ' Action:\n {}()'.format(t.title()))
+        if t == "pause":
+            ymin = y_min()
     if line.startswith("PlayHead"):
         head = parse_playhead(line)
         ms, _ = head
@@ -66,7 +79,7 @@ for line in sys.stdin:
         play_head = plt.axvline(ms, color="black")
 
     plt.xlim(start, end)
-    print(start, end, end='\r')
+    # print(start, end, end='\r')
     plt.tight_layout()
     plt.pause(0.05)
 
