@@ -27,6 +27,7 @@ def parse_playhead(line):
 plt.ion()
 plt.figure(figsize=(20, 2))
 plt.ylim((0, 1))
+plt.yticks(())
 
 start = None
 end = None
@@ -40,7 +41,7 @@ action_color = {
 
 def face_color(colors=list()):
     if not len(colors):
-        colors.extend(("b", "g"))
+        colors.extend(('0.5', '0.75'))
     colors.reverse()
     return colors[0]
 
