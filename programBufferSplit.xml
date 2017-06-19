@@ -1,0 +1,1096 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+
+const int frameSize = 2;
+
+int missingParts = 0;
+int missingFrames = 2;
+int scBufferPutFrames = 0;
+int scBufferAcceptedFrames = 0;
+
+bool scBufferIsFull = false;
+bool scBufferIsEmpty = false;
+int scBufferFill = 0;
+int scBufferSize = 2 * frameSize;
+
+chan mainInit, selectSong, play, pause;
+urgent broadcast chan soundcardInit, soundcardPause, soundcardStop;
+chan soundcardPlay;
+chan startMover;
+broadcast chan moverNewMissing;
+urgent chan putData, dataPut;
+chan listenPause, listenStart;
+broadcast chan scBufferRead, scBufferUnderflow, scBufferOverflow, scBufferWrite, scBufferFull;
+broadcast chan scBufferEmpty;
+chan scBufferPut, scBufferGet;
+broadcast chan scBufferInit;
+
+broadcast chan sound;</declaration>
+	<template>
+		<name>Listener</name>
+		<declaration>clock l;
+
+int hears = 0;</declaration>
+		<location id="id0" x="748" y="-204" color="#00ff00">
+			<name x="688" y="-221">Happy</name>
+		</location>
+		<location id="id1" x="544" y="0">
+		</location>
+		<location id="id2" x="748" y="204" color="#ff0000">
+			<name x="756" y="178">Disappointed</name>
+		</location>
+		<location id="id3" x="748" y="0">
+			<name x="773" y="-8">Listening</name>
+			<label kind="invariant" x="663" y="8">l &lt;= 11 &amp;&amp;
+hears &lt;= 10</label>
+		</location>
+		<location id="id4" x="340" y="0">
+			<name x="297" y="-8">Off</name>
+		</location>
+		<init ref="id4"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="544" y="-136">hears == 10</label>
+			<label kind="synchronisation" x="544" y="-119">sound?</label>
+			<nail x="543" y="-170"/>
+			<nail x="714" y="-170"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="824" y="-255">listenStart?</label>
+			<nail x="816" y="-272"/>
+			<nail x="816" y="-204"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="680" y="-289">listenPause?</label>
+			<nail x="680" y="-272"/>
+			<nail x="748" y="-272"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id0"/>
+			<label kind="guard" x="748" y="-136">hears == 10</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="400" y="34">listenPause?</label>
+			<nail x="510" y="34"/>
+			<nail x="374" y="34"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="guard" x="586" y="0">hears &lt; 10</label>
+			<label kind="synchronisation" x="586" y="-17">sound?</label>
+			<label kind="assignment" x="586" y="17">l := 0,
+hears++</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="400" y="-17">listenStart?</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="399" y="-51">listenPause?</label>
+			<nail x="714" y="-34"/>
+			<nail x="374" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="671" y="85">l == 11 &amp;&amp;
+hears != 10</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id3"/>
+			<label kind="guard" x="858" y="-17">hears &lt; 10</label>
+			<label kind="synchronisation" x="858" y="-34">sound?</label>
+			<label kind="assignment" x="858" y="0">l := 0,
+hears++</label>
+			<nail x="850" y="-34"/>
+			<nail x="850" y="-34"/>
+			<nail x="850" y="34"/>
+		</transition>
+	</template>
+	<template>
+		<name>User</name>
+		<declaration>clock t;</declaration>
+		<location id="id5" x="272" y="-136">
+			<committed/>
+		</location>
+		<location id="id6" x="544" y="136">
+			<committed/>
+		</location>
+		<location id="id7" x="544" y="0">
+		</location>
+		<location id="id8" x="272" y="0">
+			<label kind="invariant" x="280" y="8">t &lt;= 5</label>
+		</location>
+		<location id="id9" x="136" y="0">
+			<label kind="invariant" x="126" y="17">t &lt;= 5</label>
+		</location>
+		<location id="id10" x="0" y="0">
+			<label kind="invariant" x="-10" y="17">t &lt;= 5</label>
+		</location>
+		<init ref="id10"/>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="365" y="-153">listenStart!</label>
+			<label kind="assignment" x="382" y="-136">t := 0</label>
+			<nail x="544" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="280" y="-85">play!</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="374" y="119">listenPause!</label>
+			<label kind="assignment" x="399" y="136">t := 0</label>
+			<nail x="272" y="136"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="guard" x="552" y="42">t &gt; 20</label>
+			<label kind="synchronisation" x="552" y="51">pause!</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="161" y="-17">selectSong!</label>
+			<label kind="assignment" x="161" y="0">t := 0</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="42" y="-17">mainInit!</label>
+			<label kind="assignment" x="42" y="0">t := 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>PausingUserTest</name>
+		<declaration>clock t;</declaration>
+		<location id="id11" x="170" y="-612">
+		</location>
+		<location id="id12" x="-34" y="-612">
+		</location>
+		<location id="id13" x="-238" y="-612">
+		</location>
+		<location id="id14" x="-442" y="-612">
+			<committed/>
+		</location>
+		<location id="id15" x="-646" y="-612">
+			<committed/>
+		</location>
+		<location id="id16" x="-850" y="-612">
+			<committed/>
+		</location>
+		<init ref="id16"/>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="51" y="-629">play!</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-161" y="-629">pause!</label>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="-357" y="-629">play!</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="-586" y="-629">selectSong!</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="-782" y="-629">mainInit!</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Main</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id17" x="238" y="-102">
+			<committed/>
+		</location>
+		<location id="id18" x="238" y="-170">
+			<committed/>
+		</location>
+		<location id="id19" x="238" y="-34">
+			<committed/>
+		</location>
+		<location id="id20" x="510" y="-34">
+		</location>
+		<location id="id21" x="510" y="-238">
+			<committed/>
+		</location>
+		<location id="id22" x="-170" y="-238">
+			<committed/>
+		</location>
+		<location id="id23" x="-314" y="-238">
+			<name x="-356" y="-272">uninitialized</name>
+		</location>
+		<location id="id24" x="238" y="-238">
+		</location>
+		<location id="id25" x="102" y="-238">
+			<name x="76" y="-272">starting</name>
+			<committed/>
+		</location>
+		<location id="id26" x="-34" y="-238">
+			<name x="-68" y="-272">initialized</name>
+		</location>
+		<init ref="id23"/>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id18"/>
+			<label kind="assignment" x="102" y="-144">missingFrames += 2</label>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="102" y="-212">moverNewMissing!</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="119" y="-76">soundcardPause!</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="425" y="-51">pause?</label>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id20"/>
+			<label kind="synchronisation" x="510" y="-110">soundcardPlay!</label>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="425" y="-255">play?</label>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id26"/>
+			<label kind="synchronisation" x="-153" y="-255">soundcardInit!</label>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="-272" y="-255">mainInit?</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="127" y="-255">startMover!</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id25"/>
+			<label kind="synchronisation" x="-8" y="-255">selectSong?</label>
+		</transition>
+	</template>
+	<template>
+		<name>BetterMover</name>
+		<declaration>clock r;
+
+int lastPut = 0;
+
+int offset = 0;
+bool hasFrame = false;
+
+bool wasFullWrite() {
+    return scBufferAcceptedFrames == lastPut;
+}
+
+void loadFrames(int i) {
+    scBufferPutFrames = i;
+    lastPut = i;
+}</declaration>
+		<location id="id27" x="-1020" y="-374">
+			<committed/>
+		</location>
+		<location id="id28" x="-340" y="-578">
+			<label kind="invariant" x="-350" y="-561">r &lt;= 30</label>
+		</location>
+		<location id="id29" x="-1020" y="-238">
+			<committed/>
+		</location>
+		<location id="id30" x="-1020" y="-102">
+			<committed/>
+		</location>
+		<location id="id31" x="-102" y="-306">
+			<committed/>
+		</location>
+		<location id="id32" x="-34" y="-612">
+			<label kind="invariant" x="-25" y="-603">r &lt;= 1</label>
+		</location>
+		<location id="id33" x="-510" y="-578" color="#ff00ff">
+			<label kind="invariant" x="-552" y="-612">r &lt;= 5</label>
+			<committed/>
+		</location>
+		<location id="id34" x="-748" y="-374" color="#ff00ff">
+			<committed/>
+		</location>
+		<location id="id35" x="-510" y="-476" color="#ff00ff">
+			<name x="-569" y="-501">Waiting</name>
+		</location>
+		<location id="id36" x="-748" y="-102" color="#ffa500">
+			<committed/>
+		</location>
+		<location id="id37" x="-510" y="-102" color="#ffa500">
+		</location>
+		<location id="id38" x="-102" y="-102" color="#ffa500">
+			<name x="-85" y="-110">Writing</name>
+			<committed/>
+		</location>
+		<location id="id39" x="-102" y="-578" color="#0000ff">
+			<name x="-170" y="-603">Reading</name>
+			<label kind="invariant" x="-93" y="-569">r &lt;= 1</label>
+		</location>
+		<location id="id40" x="-612" y="-374" color="#ff0000">
+			<name x="-622" y="-408">Killed</name>
+		</location>
+		<init ref="id40"/>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id34"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-1173" y="-323">offset &lt; frameSize</label>
+			<nail x="-1054" y="-272"/>
+			<nail x="-1054" y="-340"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-1020" y="-323">offset &gt;= frameSize</label>
+			<label kind="assignment" x="-1020" y="-306">offset = 0,
+hasFrame = false</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id31"/>
+			<label kind="guard" x="-535" y="-187">offset &lt; frameSize &amp;&amp;
+scBufferAcceptedFrames != 0</label>
+			<label kind="assignment" x="-535" y="-153">loadFrames(frameSize - offset)</label>
+			<nail x="-986" y="-136"/>
+			<nail x="-136" y="-136"/>
+			<nail x="-136" y="-272"/>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id28"/>
+			<label kind="assignment" x="-476" y="-595">missingFrames--,
+r := 0</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id29"/>
+			<label kind="guard" x="-1215" y="-187">offset &gt;= frameSize ||
+scBufferAcceptedFrames == 0</label>
+		</transition>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id30"/>
+			<label kind="assignment" x="-994" y="-119">offset += scBufferAcceptedFrames</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id38"/>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id31"/>
+			<label kind="assignment" x="-25" y="-493">loadFrames(frameSize - offset)</label>
+			<nail x="-34" y="-340"/>
+			<nail x="-68" y="-340"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id32"/>
+			<label kind="guard" x="-263" y="-629">hasFrame == true</label>
+			<label kind="assignment" x="-221" y="-612">r := 0</label>
+			<nail x="-306" y="-612"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id39"/>
+			<label kind="guard" x="-297" y="-578">hasFrame == false</label>
+			<label kind="assignment" x="-255" y="-595">r := 0</label>
+		</transition>
+		<transition>
+			<source ref="id40"/>
+			<target ref="id34"/>
+			<label kind="synchronisation" x="-714" y="-374">startMover?</label>
+			<label kind="assignment" x="-595" y="-391">r :=  0</label>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id33"/>
+			<label kind="guard" x="-739" y="-578">missingFrames &gt;= 1</label>
+			<label kind="assignment" x="-739" y="-561">r := 0</label>
+			<nail x="-748" y="-578"/>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id35"/>
+			<label kind="guard" x="-697" y="-476">missingFrames == 0</label>
+			<nail x="-714" y="-408"/>
+			<nail x="-714" y="-476"/>
+		</transition>
+		<transition>
+			<source ref="id35"/>
+			<target ref="id33"/>
+			<label kind="guard" x="-501" y="-544">missingFrames &gt;= 1</label>
+			<label kind="synchronisation" x="-501" y="-527">moverNewMissing?</label>
+			<label kind="assignment" x="-501" y="-510">r := 0</label>
+		</transition>
+		<transition>
+			<source ref="id37"/>
+			<target ref="id36"/>
+			<label kind="synchronisation" x="-671" y="-119">scBufferWrite?</label>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id37"/>
+			<label kind="synchronisation" x="-255" y="-119">scBufferPut!</label>
+		</transition>
+		<transition>
+			<source ref="id39"/>
+			<target ref="id31"/>
+			<label kind="guard" x="-144" y="-493">r &gt;= 1</label>
+			<label kind="assignment" x="-263" y="-476">loadFrames(frameSize),
+hasFrame = true</label>
+		</transition>
+	</template>
+	<template>
+		<name>Mover</name>
+		<declaration>clock r;
+
+bool lastWasPart = false;
+int lastPut = 0;
+
+bool wasFullWrite() {
+    return scBufferAcceptedFrames == lastPut;
+}
+
+void loadFrames(int i) {
+    scBufferPutFrames = i;
+    lastPut = i;
+}</declaration>
+		<location id="id41" x="-238" y="102" color="#ffa500">
+			<committed/>
+		</location>
+		<location id="id42" x="0" y="-238" color="#ff00ff">
+			<label kind="invariant" x="9" y="-272">r &lt;= 5</label>
+		</location>
+		<location id="id43" x="-238" y="34" color="#ff00ff">
+			<committed/>
+		</location>
+		<location id="id44" x="0" y="-136" color="#ff00ff">
+			<name x="-59" y="-161">Waiting</name>
+		</location>
+		<location id="id45" x="-238" y="238" color="#ffa500">
+			<committed/>
+		</location>
+		<location id="id46" x="0" y="238" color="#ffa500">
+		</location>
+		<location id="id47" x="238" y="238" color="#ffa500">
+			<name x="255" y="230">Writing</name>
+			<committed/>
+		</location>
+		<location id="id48" x="238" y="-238" color="#0000ff">
+			<name x="170" y="-263">Reading</name>
+			<label kind="invariant" x="247" y="-263">r &lt;= 1</label>
+		</location>
+		<location id="id49" x="-374" y="34" color="#ff0000">
+			<name x="-384" y="0">Killed</name>
+		</location>
+		<init ref="id49"/>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id47"/>
+			<label kind="guard" x="68" y="-51">lastWasPart == true</label>
+			<label kind="assignment" x="-17" y="-34">loadFrames(scBufferPutFrames)</label>
+			<nail x="34" y="-204"/>
+			<nail x="204" y="-204"/>
+			<nail x="204" y="204"/>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id43"/>
+			<label kind="assignment" x="-374" y="68">missingFrames--</label>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id48"/>
+			<label kind="guard" x="34" y="-238">lastWasPart == false</label>
+			<label kind="assignment" x="85" y="-255">r := 0</label>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id41"/>
+			<label kind="guard" x="-161" y="136">!wasFullWrite()</label>
+			<label kind="assignment" x="-161" y="153">lastWasPart := true</label>
+			<nail x="-204" y="204"/>
+			<nail x="-170" y="204"/>
+			<nail x="-170" y="102"/>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id43"/>
+			<label kind="synchronisation" x="-348" y="34">startMover?</label>
+			<label kind="assignment" x="-348" y="17">r :=  0</label>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id42"/>
+			<label kind="guard" x="-229" y="-238">missingFrames &gt;= 1</label>
+			<label kind="assignment" x="-229" y="-221">r := 0</label>
+			<nail x="-238" y="-238"/>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id44"/>
+			<label kind="guard" x="-187" y="-136">missingFrames == 0</label>
+			<nail x="-204" y="0"/>
+			<nail x="-204" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id41"/>
+			<label kind="guard" x="-340" y="153">wasFullWrite()</label>
+			<label kind="assignment" x="-382" y="170">lastWasPart := false</label>
+		</transition>
+		<transition>
+			<source ref="id44"/>
+			<target ref="id42"/>
+			<label kind="guard" x="9" y="-204">missingFrames &gt;= 1</label>
+			<label kind="synchronisation" x="9" y="-187">moverNewMissing?</label>
+			<label kind="assignment" x="9" y="-170">r := 0</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id45"/>
+			<label kind="synchronisation" x="-178" y="221">scBufferWrite?</label>
+		</transition>
+		<transition>
+			<source ref="id47"/>
+			<target ref="id46"/>
+			<label kind="synchronisation" x="59" y="221">scBufferPut!</label>
+		</transition>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id47"/>
+			<label kind="guard" x="247" y="-51">r &gt;= 1</label>
+			<label kind="assignment" x="247" y="-34">loadFrames(frameSize)</label>
+		</transition>
+	</template>
+	<template>
+		<name>Progress</name>
+		<declaration>clock t;</declaration>
+		<location id="id50" x="-204" y="-170">
+			<committed/>
+		</location>
+		<location id="id51" x="-204" y="-34">
+			<committed/>
+		</location>
+		<location id="id52" x="0" y="-34">
+			<label kind="invariant" x="8" y="-25">t &lt;= 5</label>
+		</location>
+		<location id="id53" x="0" y="-170">
+		</location>
+		<init ref="id53"/>
+		<transition>
+			<source ref="id51"/>
+			<target ref="id50"/>
+			<label kind="synchronisation" x="-331" y="-119">moverNewMissing!</label>
+		</transition>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id53"/>
+			<label kind="guard" x="-178" y="-187">missingParts &lt; frameSize</label>
+		</transition>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id52"/>
+			<label kind="guard" x="-136" y="-144">missingParts &gt;= frameSize</label>
+			<label kind="assignment" x="-102" y="-119">t := 0</label>
+		</transition>
+		<transition>
+			<source ref="id52"/>
+			<target ref="id51"/>
+			<label kind="assignment" x="-161" y="-34">missingFrames++,
+missingParts-=frameSize</label>
+		</transition>
+		<transition>
+			<source ref="id53"/>
+			<target ref="id52"/>
+			<label kind="guard" x="8" y="-119">missingParts &gt;= frameSize</label>
+			<label kind="synchronisation" x="8" y="-102">scBufferRead?</label>
+			<label kind="assignment" x="8" y="-85">t := 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>Soundcard</name>
+		<declaration>clock p;
+int bSize = 4; //Double the actual value
+int bFill = 0;
+
+int bufferRet = 0;</declaration>
+		<location id="id54" x="-1666" y="-1462" color="#00ff00">
+			<committed/>
+		</location>
+		<location id="id55" x="-1462" y="-1462" color="#00ff00">
+			<name x="-1453" y="-1487">Reading</name>
+			<committed/>
+		</location>
+		<location id="id56" x="-2108" y="-1700">
+			<committed/>
+		</location>
+		<location id="id57" x="-1904" y="-1700" color="#ffff00">
+			<name x="-1972" y="-1734">Stopped</name>
+		</location>
+		<location id="id58" x="-2312" y="-1700">
+			<name x="-2354" y="-1734">Dead</name>
+		</location>
+		<location id="id59" x="-1360" y="-1700" color="#ffff00">
+			<name x="-1343" y="-1717">Paused</name>
+		</location>
+		<location id="id60" x="-1564" y="-1564" color="#00ff00">
+			<name x="-1632" y="-1581">Playing</name>
+			<label kind="invariant" x="-1547" y="-1581">p &lt;= 10</label>
+		</location>
+		<location id="id61" x="-1564" y="-1836" color="#ffff00">
+			<name x="-1574" y="-1870">Buffering</name>
+			<label kind="invariant" x="-1725" y="-1836">scBufferIsFull != true</label>
+		</location>
+		<location id="id62" x="-1700" y="-1700">
+			<committed/>
+		</location>
+		<init ref="id58"/>
+		<transition>
+			<source ref="id55"/>
+			<target ref="id61"/>
+			<label kind="synchronisation" x="-1360" y="-1649">scBufferUnderflow?</label>
+			<nail x="-1224" y="-1462"/>
+			<nail x="-1224" y="-1836"/>
+		</transition>
+		<transition>
+			<source ref="id54"/>
+			<target ref="id60"/>
+			<label kind="synchronisation" x="-1674" y="-1530">sound!</label>
+			<label kind="assignment" x="-1674" y="-1513">p := 0</label>
+		</transition>
+		<transition>
+			<source ref="id55"/>
+			<target ref="id54"/>
+			<label kind="synchronisation" x="-1606" y="-1462">scBufferRead?</label>
+		</transition>
+		<transition>
+			<source ref="id60"/>
+			<target ref="id55"/>
+			<label kind="guard" x="-1496" y="-1530">p == 10</label>
+			<label kind="synchronisation" x="-1530" y="-1547">scBufferGet!</label>
+		</transition>
+		<transition>
+			<source ref="id59"/>
+			<target ref="id57"/>
+			<label kind="synchronisation" x="-1589" y="-1955">soundcardStop?</label>
+			<nail x="-1343" y="-1717"/>
+			<nail x="-1343" y="-1938"/>
+			<nail x="-1904" y="-1938"/>
+		</transition>
+		<transition>
+			<source ref="id59"/>
+			<target ref="id62"/>
+			<label kind="synchronisation" x="-1581" y="-1921">soundcardPlay?</label>
+			<nail x="-1360" y="-1904"/>
+			<nail x="-1700" y="-1904"/>
+		</transition>
+		<transition>
+			<source ref="id57"/>
+			<target ref="id62"/>
+			<label kind="synchronisation" x="-1853" y="-1717">soundcardPlay?</label>
+		</transition>
+		<transition>
+			<source ref="id56"/>
+			<target ref="id57"/>
+			<label kind="synchronisation" x="-2048" y="-1717">scBufferInit!</label>
+		</transition>
+		<transition>
+			<source ref="id58"/>
+			<target ref="id56"/>
+			<label kind="synchronisation" x="-2261" y="-1717">soundcardInit?</label>
+		</transition>
+		<transition>
+			<source ref="id60"/>
+			<target ref="id59"/>
+			<label kind="synchronisation" x="-1521" y="-1666">soundcardPause?</label>
+			<nail x="-1530" y="-1598"/>
+			<nail x="-1530" y="-1666"/>
+			<nail x="-1394" y="-1666"/>
+		</transition>
+		<transition>
+			<source ref="id61"/>
+			<target ref="id59"/>
+			<label kind="synchronisation" x="-1521" y="-1751">soundcardPause?</label>
+			<nail x="-1530" y="-1802"/>
+			<nail x="-1530" y="-1734"/>
+			<nail x="-1394" y="-1734"/>
+		</transition>
+		<transition>
+			<source ref="id61"/>
+			<target ref="id60"/>
+			<label kind="synchronisation" x="-1564" y="-1717">scBufferFull?</label>
+			<label kind="assignment" x="-1564" y="-1700">p := 0</label>
+		</transition>
+		<transition>
+			<source ref="id62"/>
+			<target ref="id61"/>
+			<label kind="guard" x="-1785" y="-1785">scBufferIsFull == false</label>
+		</transition>
+		<transition>
+			<source ref="id62"/>
+			<target ref="id60"/>
+			<label kind="guard" x="-1776" y="-1632">scBufferIsFull == true</label>
+			<label kind="assignment" x="-1649" y="-1615">p := 0</label>
+		</transition>
+	</template>
+	<template>
+		<name>SoundcardBuffer</name>
+		<declaration>clock t;
+void writeReset() {
+    scBufferIsEmpty := false;
+    scBufferAcceptedFrames = 0;
+}
+
+bool canContain(int i) {
+    return scBufferFill + i &lt;= scBufferSize;
+}
+
+bool transferDone() {
+    return scBufferPutFrames == 0;
+}
+
+bool canTransfer() {
+    return scBufferPutFrames &gt;= 1 &amp;&amp; canContain(1);
+}
+
+void transferOne() {
+    scBufferPutFrames -= 1;
+    scBufferFill += 1;
+    scBufferAcceptedFrames += 1;
+}</declaration>
+		<location id="id63" x="238" y="-374" color="#ffa500">
+			<name x="246" y="-399">Interrupted</name>
+			<committed/>
+		</location>
+		<location id="id64" x="-136" y="-374" color="#ffa500">
+			<name x="-119" y="-382">Filled</name>
+			<committed/>
+		</location>
+		<location id="id65" x="-476" y="-127" color="#00ffff">
+			<name x="-467" y="-118">OperationComplete</name>
+			<committed/>
+		</location>
+		<location id="id66" x="-238" y="-272" color="#ffa500">
+			<name x="-340" y="-289">PutComplete</name>
+			<committed/>
+		</location>
+		<location id="id67" x="-340" y="-374" color="#ffa500">
+			<name x="-416" y="-382">Overflow</name>
+			<committed/>
+		</location>
+		<location id="id68" x="68" y="-374" color="#ffa500">
+			<name x="76" y="-399">Accepted</name>
+			<committed/>
+		</location>
+		<location id="id69" x="-238" y="-476" color="#ffa500">
+			<name x="-263" y="-459">Putting</name>
+			<label kind="invariant" x="-289" y="-484">t &lt;= 1</label>
+		</location>
+		<location id="id70" x="-476" y="-612" color="#00ffff">
+			<name x="-467" y="-637">Idle</name>
+		</location>
+		<location id="id71" x="-476" y="-714" color="#ff0000">
+			<name x="-518" y="-739">Dead</name>
+		</location>
+		<init ref="id71"/>
+		<transition>
+			<source ref="id63"/>
+			<target ref="id66"/>
+			<nail x="238" y="-238"/>
+			<nail x="-204" y="-238"/>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id63"/>
+			<label kind="guard" x="110" y="-493">!transferDone() &amp;&amp;
+scBufferFill != scBufferSize</label>
+			<label kind="synchronisation" x="119" y="-510">soundcardPause?</label>
+			<nail x="-204" y="-510"/>
+			<nail x="238" y="-510"/>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id67"/>
+			<label kind="guard" x="-408" y="-459">!canContain(1) &amp;&amp;
+!transferDone()</label>
+			<label kind="synchronisation" x="-425" y="-425">scBufferOverflow!</label>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id69"/>
+			<label kind="guard" x="-238" y="-612">canTransfer() &amp;&amp;
+t == 1</label>
+			<label kind="assignment" x="-238" y="-578">transferOne(),
+t := 0</label>
+			<nail x="-272" y="-544"/>
+			<nail x="-238" y="-544"/>
+		</transition>
+		<transition>
+			<source ref="id64"/>
+			<target ref="id66"/>
+			<label kind="synchronisation" x="-153" y="-357">scBufferFull!</label>
+			<label kind="assignment" x="-170" y="-340">scBufferIsFull := true</label>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id64"/>
+			<label kind="guard" x="-178" y="-450">transferDone() &amp;&amp;
+scBufferFill == scBufferSize</label>
+		</transition>
+		<transition>
+			<source ref="id65"/>
+			<target ref="id70"/>
+		</transition>
+		<transition>
+			<source ref="id66"/>
+			<target ref="id65"/>
+			<label kind="synchronisation" x="-365" y="-221">scBufferWrite!</label>
+		</transition>
+		<transition>
+			<source ref="id67"/>
+			<target ref="id66"/>
+			<label kind="synchronisation" x="-408" y="-357">scBufferFull!</label>
+			<label kind="assignment" x="-442" y="-340">scBufferIsFull := true</label>
+		</transition>
+		<transition>
+			<source ref="id68"/>
+			<target ref="id66"/>
+			<nail x="68" y="-272"/>
+		</transition>
+		<transition>
+			<source ref="id69"/>
+			<target ref="id68"/>
+			<label kind="guard" x="76" y="-442">transferDone() &amp;&amp;
+scBufferFill != scBufferSize</label>
+			<nail x="68" y="-476"/>
+		</transition>
+		<transition>
+			<source ref="id70"/>
+			<target ref="id69"/>
+			<label kind="synchronisation" x="-408" y="-595">scBufferPut?</label>
+			<label kind="assignment" x="-340" y="-578">writeReset(),
+t := 0</label>
+		</transition>
+		<transition>
+			<source ref="id71"/>
+			<target ref="id70"/>
+			<label kind="synchronisation" x="-467" y="-672">scBufferInit?</label>
+		</transition>
+	</template>
+	<template>
+		<name>SoundBufferReader</name>
+		<declaration>clock t;</declaration>
+		<location id="id72" x="0" y="238" color="#ff00ff">
+			<name x="-68" y="230">Emptied</name>
+			<committed/>
+		</location>
+		<location id="id73" x="102" y="476" color="#00ffff">
+			<name x="111" y="485">OperationComplete</name>
+			<committed/>
+		</location>
+		<location id="id74" x="102" y="340" color="#ff00ff">
+			<name x="119" y="323">GetComplete</name>
+			<committed/>
+		</location>
+		<location id="id75" x="-204" y="238" color="#ff00ff">
+			<name x="-195" y="212">Read</name>
+			<committed/>
+		</location>
+		<location id="id76" x="204" y="238" color="#ff00ff">
+			<name x="221" y="230">Underflow</name>
+			<committed/>
+		</location>
+		<location id="id77" x="102" y="136" color="#ff00ff">
+			<label kind="invariant" x="110" y="85">t &lt;= 1</label>
+			<committed/>
+		</location>
+		<location id="id78" x="102" y="0" color="#00ffff">
+			<name x="111" y="-25">Idle</name>
+		</location>
+		<location id="id79" x="102" y="-102" color="#ff0000">
+			<name x="60" y="-127">Dead</name>
+		</location>
+		<init ref="id79"/>
+		<transition>
+			<source ref="id74"/>
+			<target ref="id73"/>
+			<label kind="synchronisation" x="102" y="391">scBufferRead!</label>
+		</transition>
+		<transition>
+			<source ref="id72"/>
+			<target ref="id74"/>
+			<label kind="synchronisation" x="-85" y="255">scBufferEmpty!</label>
+			<label kind="assignment" x="-119" y="272">scBufferIsEmpty := true,
+missingParts++</label>
+		</transition>
+		<transition>
+			<source ref="id77"/>
+			<target ref="id72"/>
+			<label kind="guard" x="-34" y="153">scBufferFill == 1</label>
+			<label kind="assignment" x="-34" y="170">scBufferFill--</label>
+		</transition>
+		<transition>
+			<source ref="id73"/>
+			<target ref="id78"/>
+			<nail x="-476" y="476"/>
+			<nail x="-476" y="0"/>
+		</transition>
+		<transition>
+			<source ref="id75"/>
+			<target ref="id74"/>
+			<label kind="assignment" x="-314" y="289">missingParts++</label>
+			<nail x="-204" y="340"/>
+		</transition>
+		<transition>
+			<source ref="id76"/>
+			<target ref="id74"/>
+			<label kind="synchronisation" x="187" y="255">scBufferEmpty!</label>
+			<label kind="assignment" x="170" y="272">scBufferIsEmpty := true</label>
+		</transition>
+		<transition>
+			<source ref="id77"/>
+			<target ref="id75"/>
+			<label kind="guard" x="-263" y="153">scBufferFill &gt; 1</label>
+			<label kind="assignment" x="-263" y="170">scBufferFill--</label>
+			<nail x="-204" y="136"/>
+		</transition>
+		<transition>
+			<source ref="id77"/>
+			<target ref="id76"/>
+			<label kind="guard" x="145" y="153">scBufferFill == 0</label>
+			<label kind="synchronisation" x="153" y="170">scBufferUnderflow!</label>
+		</transition>
+		<transition>
+			<source ref="id78"/>
+			<target ref="id77"/>
+			<label kind="synchronisation" x="8" y="51">scBufferGet?</label>
+			<label kind="assignment" x="110" y="42">scBufferIsFull := false,
+t := 0</label>
+		</transition>
+		<transition>
+			<source ref="id79"/>
+			<target ref="id78"/>
+			<label kind="synchronisation" x="111" y="-60">scBufferInit?</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+
+user = PausingUserTest();
+//user = User();
+listener = Listener();
+main = Main();
+//mover = Mover();
+mover = BetterMover();
+pgress = Progress();
+soundcard = Soundcard();
+scBuffer = SoundcardBuffer();
+scBufferReader = SoundBufferReader();
+// List one or more processes to be composed into a system.
+system main, mover, pgress, soundcard, scBuffer, scBufferReader, user, listener;
+</system>
+	<queries>
+		<query>
+			<formula>A[] !deadlock
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[] !soundcard.Underrun
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] !soundcard.Underrun
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>E[] !soundcard.Overflow
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] !scBuffer.Interrupted
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; listener.Disappointed</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; listener.Happy</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; listener.Happy</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; !listener.Happy</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; !listener.Disappointed
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>
